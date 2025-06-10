@@ -1,9 +1,11 @@
-package io.github.jiyuuuuun.PRMemo.security;
+package io.github.jiyuuuuun.PRMemo.global.security;
 
 import io.github.jiyuuuuun.PRMemo.domain.user.entity.User;
 import io.github.jiyuuuuun.PRMemo.domain.user.repository.UserRepository;
-import io.github.jiyuuuuun.PRMemo.security.util.JwtUtil;
+import io.github.jiyuuuuun.PRMemo.global.util.JwtUtil;
+import io.github.jiyuuuuun.PRMemo.global.service.RefreshTokenService;
 import jakarta.servlet.http.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -13,15 +15,13 @@ import java.io.IOException;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
-    public OAuth2SuccessHandler(UserRepository userRepository, JwtUtil jwtUtil) {
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
-    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -42,19 +42,30 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         member.setAvatarUrl(avatar);
         userRepository.save(member);
 
-        // JWT 토큰 만들기
-        String token = jwtUtil.generateToken(Map.of("login", login, "name", name), login);
+        // 토큰 생성
+        Map<String,Object> claims = Map.of("login", login, "name", name);
+        String accessToken  = jwtUtil.generateAccessToken(claims, login);
+        String refreshToken = jwtUtil.generateRefreshToken(claims, login);
 
-        // 👇 쿠키에 토큰 저장 (httpOnly로 설정)
-        Cookie jwtCookie = new Cookie("access_token", token);
-        jwtCookie.setHttpOnly(true);              // JS에서 못 읽음
-        jwtCookie.setPath("/");                   // 전체 경로에서 사용 가능
-        jwtCookie.setMaxAge(60 * 60);             // 1시간 유효
-        // jwtCookie.setSecure(true);             // HTTPS 환경에서만 전송 (배포 시 설정)
+        // Redis에 저장
+        refreshTokenService.storeRefreshToken(refreshToken);
 
-        response.addCookie(jwtCookie);
+        // Access Token 쿠키
+        Cookie aCookie = new Cookie("access_token", accessToken);
+        aCookie.setHttpOnly(true);
+        aCookie.setPath("/");
+        aCookie.setMaxAge(60 * 60); // 1시간
+        // aCookie.setSecure(true);
 
-        // 👉 프론트로 리디렉션 (쿼리 파라미터 없음!)
+        // Refresh Token 쿠키
+        Cookie rCookie = new Cookie("refresh_token", refreshToken);
+        rCookie.setHttpOnly(true);
+        rCookie.setPath("/");
+        rCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+        // rCookie.setSecure(true);
+
+        response.addCookie(aCookie);
+        response.addCookie(rCookie);
         response.sendRedirect("http://localhost:3000/oauth-success");
     }
 }

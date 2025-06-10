@@ -1,6 +1,7 @@
-package io.github.jiyuuuuun.PRMemo.security;
+package io.github.jiyuuuuun.PRMemo.global.service;
 
 import io.github.jiyuuuuun.PRMemo.domain.user.repository.UserRepository;
+import io.github.jiyuuuuun.PRMemo.global.security.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

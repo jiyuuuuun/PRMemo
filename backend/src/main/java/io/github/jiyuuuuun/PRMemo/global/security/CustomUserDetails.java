@@ -1,4 +1,4 @@
-package io.github.jiyuuuuun.PRMemo.security;
+package io.github.jiyuuuuun.PRMemo.global.security;
 
 import io.github.jiyuuuuun.PRMemo.domain.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;

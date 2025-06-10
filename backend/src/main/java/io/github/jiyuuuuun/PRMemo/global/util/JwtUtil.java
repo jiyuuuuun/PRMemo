@@ -1,11 +1,10 @@
-package io.github.jiyuuuuun.PRMemo.security.util;
+package io.github.jiyuuuuun.PRMemo.global.util;
 
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import java.util.Date;
 import java.util.Map;
 
@@ -18,15 +17,24 @@ public class JwtUtil {
         this.secret = secret;
     }
 
-    public String generateToken(Map<String, Object> claims, String subject) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + 1000 * 60 * 60); // 1시간
+    // 1시간짜리 Access 토큰
+    public String generateAccessToken(Map<String, Object> claims, String subject) {
+        return buildToken(claims, subject, 1000L * 60 * 60);
+    }
 
+    // 7일짜리 Refresh 토큰
+    public String generateRefreshToken(Map<String, Object> claims, String subject) {
+        return buildToken(claims, subject, 1000L * 60 * 60 * 24 * 7);
+    }
+
+    private String buildToken(Map<String, Object> claims, String subject, long ttlMillis) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + ttlMillis);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(now)
-                .setExpiration(expiry)
+                .setExpiration(exp)
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -58,5 +66,15 @@ public class JwtUtil {
                 .parseClaimsJws(token) // 토큰 파싱 및 검증
                 .getBody()             // 클레임 접근
                 .getSubject();         // subject(claims.sub) 추출
+    }
+
+    // 토큰 만료일자 조회를 위해 parserBuilder 사용
+    public Date getExpiration(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
     }
 }

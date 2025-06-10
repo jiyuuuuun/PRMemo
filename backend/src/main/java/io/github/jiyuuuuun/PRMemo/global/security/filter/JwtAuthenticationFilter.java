@@ -1,8 +1,8 @@
-package io.github.jiyuuuuun.PRMemo.security;
+package io.github.jiyuuuuun.PRMemo.global.security.filter;
 
 import io.github.jiyuuuuun.PRMemo.domain.user.entity.User;
 import io.github.jiyuuuuun.PRMemo.domain.user.repository.UserRepository;
-import io.github.jiyuuuuun.PRMemo.security.util.JwtUtil;
+import io.github.jiyuuuuun.PRMemo.global.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
