@@ -9,12 +9,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 import java.util.Map;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,6 +32,10 @@ class AuthControllerTest {
 
     @Autowired
     private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
 
     @AfterEach
     void tearDown() {
@@ -74,10 +80,28 @@ class AuthControllerTest {
     }
 
 
-    @DisplayName("로그아웃 요청 시 200 OK 반환")
+    @DisplayName("로그아웃 요청 시 200 OK 반환 및 Redis 토큰 삭제 확인")
     @Test
     void logout_success() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout"))
+        // given
+        String login = "testuser";
+        Map<String, Object> claims = Map.of("login", login);
+
+        String refreshToken = jwtUtil.generateRefreshToken(claims, login);
+        refreshTokenService.storeRefreshToken(refreshToken);
+
+        // Redis 저장 확인
+        String savedToken = redisTemplate.opsForValue().get("refresh:" + login);
+        assertThat(savedToken).isEqualTo(refreshToken);
+
+        // when: 로그아웃 요청
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isOk());
+
+        // then: Redis에서 삭제되었는지 확인
+        String deletedToken = redisTemplate.opsForValue().get("refresh:" + login);
+        assertThat(deletedToken).isNull(); // 삭제되었으면 null
     }
+
 }
