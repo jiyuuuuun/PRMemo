@@ -1,4 +1,4 @@
-package io.github.jiyuuuuun.PRMemo.global;
+package io.github.jiyuuuuun.PRMemo.global.entity;
 
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;

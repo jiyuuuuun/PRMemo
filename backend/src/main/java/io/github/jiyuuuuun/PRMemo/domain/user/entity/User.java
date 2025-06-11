@@ -1,6 +1,6 @@
 package io.github.jiyuuuuun.PRMemo.domain.user.entity;
 
-import io.github.jiyuuuuun.PRMemo.global.BaseEntity;
+import io.github.jiyuuuuun.PRMemo.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;
