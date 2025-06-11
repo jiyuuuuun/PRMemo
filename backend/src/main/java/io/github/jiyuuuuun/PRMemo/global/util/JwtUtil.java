@@ -5,24 +5,26 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
 @Component
 public class JwtUtil {
 
-    private final String secret;
+    private final Key key;
 
     public JwtUtil(@Value("${JWT_SECRET_KEY}") String secret) {
-        this.secret = secret;
+        // 반드시 Base64 인코딩된 키 문자열로, 디코딩하여 Key 생성
+        this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
     }
 
-    // 1시간짜리 Access 토큰
     public String generateAccessToken(Map<String, Object> claims, String subject) {
         return buildToken(claims, subject, 1000L * 60 * 60);
     }
 
-    // 7일짜리 Refresh 토큰
     public String generateRefreshToken(Map<String, Object> claims, String subject) {
         return buildToken(claims, subject, 1000L * 60 * 60 * 24 * 7);
     }
@@ -35,46 +37,40 @@ public class JwtUtil {
                 .setSubject(subject)
                 .setIssuedAt(now)
                 .setExpiration(exp)
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .setSigningKey(secret) // 서명 검증
-                    .parseClaimsJws(token); // 예외 없으면 유효함
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (SignatureException e) {
-            System.out.println("❌ JWT 서명 오류: " + e.getMessage());
-        } catch (MalformedJwtException e) {
-            System.out.println("❌ 잘못된 JWT 형식: " + e.getMessage());
-        } catch (ExpiredJwtException e) {
-            System.out.println("❌ 만료된 JWT: " + e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            System.out.println("❌ 지원되지 않는 JWT: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.out.println("❌ 비어 있는 JWT claims: " + e.getMessage());
+        } catch (Exception e) {
+            // 로깅 및 예외 구체화 가능
+            System.out.println("❌ JWT 검증 실패: " + e.getMessage());
+            return false;
         }
-
-        return false;
     }
 
     public String getSubject(String token) {
-        return Jwts.parser()
-                .setSigningKey(secret) // 서명 키 설정
-                .parseClaimsJws(token) // 토큰 파싱 및 검증
-                .getBody()             // 클레임 접근
-                .getSubject();         // subject(claims.sub) 추출
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
-    // 토큰 만료일자 조회를 위해 parserBuilder 사용
     public Date getExpiration(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getExpiration();
     }
 }
+

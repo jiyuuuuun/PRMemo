@@ -43,6 +43,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	// Springdoc OpenAPI (Swagger UI)
 	implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
+	testImplementation 'org.mockito:mockito-core'
 
 }
 
