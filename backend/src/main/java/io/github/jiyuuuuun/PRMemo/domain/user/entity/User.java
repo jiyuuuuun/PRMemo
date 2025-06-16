@@ -1,5 +1,6 @@
 package io.github.jiyuuuuun.PRMemo.domain.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.github.jiyuuuuun.PRMemo.global.entity.BaseEntity;
 import io.github.jiyuuuuun.PRMemo.domain.repository.entity.Repository;
 import jakarta.persistence.CascadeType;
@@ -26,6 +27,7 @@ public class User extends BaseEntity {
     private String name;
     private String avatarUrl;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Repository> repositories = new ArrayList<>();
 
