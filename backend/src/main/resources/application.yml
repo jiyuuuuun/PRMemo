@@ -9,7 +9,7 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: read:user
+            scope: repo
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
