@@ -1,6 +1,7 @@
 package io.github.jiyuuuuun.PRMemo.domain.user.entity;
 
 import io.github.jiyuuuuun.PRMemo.global.entity.BaseEntity;
+import io.github.jiyuuuuun.PRMemo.domain.repository.entity.Repository;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -12,6 +13,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @SuperBuilder
